@@ -1,6 +1,23 @@
-# angular-oauth2-oidc
+# angular-oauth2-oidc (patched for salesforce IDP)
 
 Support for OAuth 2 and OpenId Connect (OIDC) in Angular. Already prepared for the upcoming OAuth 2.1.
+**Patched with additional options for refresh token. Sending scope with refresh_token request is now optional.**
+
+## Create npm package
+
+After applying changes to the code under ```projects/lib/src/```, update version in package.json in ```projects/lib/``` and build dist package by running:
+```sh
+npm run build
+```
+in this project root.
+
+This will create a new package in ```dist/lib/```, where we will run
+```sh
+npm pack
+```
+to create a tarball, which can be added locally to projects.
+
+### ORIGINAL LIBRARY README
 
 ![OIDC Certified Logo](https://raw.githubusercontent.com/manfredsteyer/angular-oauth2-oidc/master/oidc.png)
 

@@ -236,11 +236,13 @@ export class OAuthService extends AuthConfig implements OnDestroy {
    * logged back in via receiving a new token.
    * @param params Additional parameter to pass
    * @param listenTo Setup automatic refresh of a specific token type
+   * @param options options passed to refreshToken()
    */
   public setupAutomaticSilentRefresh(
     params: object = {},
     listenTo?: 'access_token' | 'id_token' | 'any',
-    noPrompt = true
+    noPrompt = true,
+    options?: { setScope: boolean }
   ): void {
     let shouldRunSilentRefresh = true;
     this.clearAutomaticRefreshTimer();
@@ -263,7 +265,7 @@ export class OAuthService extends AuthConfig implements OnDestroy {
       .subscribe((_) => {
         if (shouldRunSilentRefresh) {
           // this.silentRefresh(params, noPrompt).catch(_ => {
-          this.refreshInternal(params, noPrompt).catch((_) => {
+          this.refreshInternal(params, noPrompt, options).catch((_) => {
             this.debug('Automatic silent refresh did not work');
           });
         }
@@ -274,10 +276,11 @@ export class OAuthService extends AuthConfig implements OnDestroy {
 
   protected refreshInternal(
     params,
-    noPrompt
+    noPrompt,
+    options?: { setScope: boolean }
   ): Promise<TokenResponse | OAuthEvent> {
     if (!this.useSilentRefresh && this.responseType === 'code') {
-      return this.refreshToken();
+      return this.refreshToken(options);
     } else {
       return this.silentRefresh(params, noPrompt);
     }
