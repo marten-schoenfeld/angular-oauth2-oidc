@@ -927,7 +927,7 @@ export class OAuthService extends AuthConfig implements OnDestroy {
    * A solution for this is provided by the
    * method silentRefresh.
    */
-  public refreshToken(): Promise<TokenResponse> {
+  public refreshToken(options?: { setScope: boolean }): Promise<TokenResponse> {
     this.assertUrlNotNullAndCorrectProtocol(
       this.tokenEndpoint,
       'tokenEndpoint'
@@ -935,8 +935,11 @@ export class OAuthService extends AuthConfig implements OnDestroy {
     return new Promise((resolve, reject) => {
       let params = new HttpParams({ encoder: new WebHttpUrlEncodingCodec() })
         .set('grant_type', 'refresh_token')
-        .set('scope', this.scope)
         .set('refresh_token', this._storage.getItem('refresh_token'));
+
+      if (!options || options.setScope == true) {
+        params.set('scope', this.scope);
+      }
 
       let headers = new HttpHeaders().set(
         'Content-Type',
