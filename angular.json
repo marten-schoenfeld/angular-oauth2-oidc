@@ -21,6 +21,15 @@
               "tsConfig": "projects/lib/tsconfig.lib.prod.json"
             }
           }
+        },
+        "lint": {
+          "builder": "@angular-eslint/builder:lint",
+          "options": {
+            "lintFilePatterns": [
+              "projects/lib/**/*.ts",
+              "projects/lib/**/*.html"
+            ]
+          }
         }
       }
     },
@@ -84,18 +93,18 @@
         "serve": {
           "builder": "@angular-devkit/build-angular:dev-server",
           "options": {
-            "browserTarget": "sample:build"
+            "buildTarget": "sample:build"
           },
           "configurations": {
             "production": {
-              "browserTarget": "sample:build:production"
+              "buildTarget": "sample:build:production"
             }
           }
         },
         "extract-i18n": {
           "builder": "@angular-devkit/build-angular:extract-i18n",
           "options": {
-            "browserTarget": "sample:build"
+            "buildTarget": "sample:build"
           }
         },
         "test": {
@@ -118,7 +127,6 @@
         }
       }
     },
-
     "quickstart-demo": {
       "projectType": "application",
       "schematics": {},
@@ -178,19 +186,18 @@
         "serve": {
           "builder": "@angular-devkit/build-angular:dev-server",
           "options": {
-            "browserTarget": "quickstart-demo:build"
-
+            "buildTarget": "quickstart-demo:build"
           },
           "configurations": {
             "production": {
-              "browserTarget": "quickstart-demo:build:production"
+              "buildTarget": "quickstart-demo:build:production"
             }
           }
         },
         "extract-i18n": {
           "builder": "@angular-devkit/build-angular:extract-i18n",
           "options": {
-            "browserTarget": "quickstart-demo:build"
+            "buildTarget": "quickstart-demo:build"
           }
         },
         "test": {
@@ -207,22 +214,9 @@
             "styles": ["projects/quickstart-demo/src/styles.css"],
             "scripts": []
           }
-        },
-        "e2e": {
-          "builder": "@angular-devkit/build-angular:protractor",
-          "options": {
-            "protractorConfig": "projects/quickstart-demo/e2e/protractor.conf.js",
-            "devServerTarget": "quickstart-demo:serve"
-          },
-          "configurations": {
-            "production": {
-              "devServerTarget": "quickstart-demo:serve:production"
-            }
-          }
         }
       }
     },
-
     "angular-oauth2-oidc-jwks": {
       "projectType": "library",
       "root": "projects/angular-oauth2-oidc-jwks",
@@ -303,10 +297,10 @@
           "builder": "@angular-devkit/build-angular:dev-server",
           "configurations": {
             "production": {
-              "browserTarget": "quickstart-standalone:build:production"
+              "buildTarget": "quickstart-standalone:build:production"
             },
             "development": {
-              "browserTarget": "quickstart-standalone:build:development"
+              "buildTarget": "quickstart-standalone:build:development"
             }
           },
           "defaultConfiguration": "development"
@@ -314,7 +308,7 @@
         "extract-i18n": {
           "builder": "@angular-devkit/build-angular:extract-i18n",
           "options": {
-            "browserTarget": "quickstart-standalone:build"
+            "buildTarget": "quickstart-standalone:build"
           }
         },
         "test": {
@@ -344,6 +338,8 @@
     }
   },
   "cli": {
-    "analytics": false
+    "analytics": false,
+    "schematicCollections": ["@angular-eslint/schematics"],
+    "packageManager": "npm"
   }
 }

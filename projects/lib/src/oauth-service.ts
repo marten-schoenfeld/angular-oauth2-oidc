@@ -46,7 +46,6 @@ import {
   ParsedIdToken,
   OidcDiscoveryDoc,
   TokenResponse,
-  UserInfo,
 } from './types';
 import { b64DecodeUnicode, base64UrlEncode } from './base64-helper';
 import { AuthConfig } from './auth.config';
@@ -121,7 +120,7 @@ export class OAuthService extends AuthConfig implements OnDestroy {
     protected urlHelper: UrlHelperService,
     protected logger: OAuthLogger,
     @Optional() protected crypto: HashHandler,
-    @Inject(DOCUMENT) document: any,
+    @Inject(DOCUMENT) document: Document,
     protected dateTimeService: DateTimeProvider
   ) {
     super();
@@ -224,7 +223,7 @@ export class OAuthService extends AuthConfig implements OnDestroy {
   protected setupSessionCheck(): void {
     this.events
       .pipe(filter((e) => e.type === 'token_received'))
-      .subscribe((e) => {
+      .subscribe(() => {
         this.initSessionCheck();
       });
   }
@@ -262,10 +261,10 @@ export class OAuthService extends AuthConfig implements OnDestroy {
         ),
         debounceTime(1000)
       )
-      .subscribe((_) => {
+      .subscribe(() => {
         if (shouldRunSilentRefresh) {
           // this.silentRefresh(params, noPrompt).catch(_ => {
-          this.refreshInternal(params, noPrompt, options).catch((_) => {
+          this.refreshInternal(params, noPrompt, options).catch(() => {
             this.debug('Automatic silent refresh did not work');
           });
         }
@@ -296,7 +295,7 @@ export class OAuthService extends AuthConfig implements OnDestroy {
   public loadDiscoveryDocumentAndTryLogin(
     options: LoginOptions = null
   ): Promise<boolean> {
-    return this.loadDiscoveryDocument().then((doc) => {
+    return this.loadDiscoveryDocument().then(() => {
       return this.tryLogin(options);
     });
   }
@@ -312,7 +311,7 @@ export class OAuthService extends AuthConfig implements OnDestroy {
     options: LoginOptions & { state?: string } = null
   ): Promise<boolean> {
     options = options || {};
-    return this.loadDiscoveryDocumentAndTryLogin(options).then((_) => {
+    return this.loadDiscoveryDocumentAndTryLogin(options).then(() => {
       if (!this.hasValidIdToken() || !this.hasValidAccessToken()) {
         const state = typeof options.state === 'string' ? options.state : '';
         this.initLoginFlow(state);
@@ -325,7 +324,7 @@ export class OAuthService extends AuthConfig implements OnDestroy {
 
   protected debug(...args): void {
     if (this.showDebugInformation) {
-      this.logger.debug.apply(this.logger, args);
+      this.logger.debug(...args);
     }
   }
 
@@ -362,8 +361,8 @@ export class OAuthService extends AuthConfig implements OnDestroy {
     }
 
     if (
-      (lcUrl.match(/^http:\/\/localhost($|[:\/])/) ||
-        lcUrl.match(/^http:\/\/localhost($|[:\/])/)) &&
+      (lcUrl.match(/^http:\/\/localhost($|[:/])/) ||
+        lcUrl.match(/^http:\/\/localhost($|[:/])/)) &&
       this.requireHttps === 'remoteOnly'
     ) {
       return true;
@@ -413,7 +412,7 @@ export class OAuthService extends AuthConfig implements OnDestroy {
 
     this.tokenReceivedSubscription = this.events
       .pipe(filter((e) => e.type === 'token_received'))
-      .subscribe((_) => {
+      .subscribe(() => {
         this.clearAccessTokenTimer();
         this.clearIdTokenTimer();
         this.setupExpirationTimers();
@@ -981,7 +980,7 @@ export class OAuthService extends AuthConfig implements OnDestroy {
                 )
               ).pipe(
                 tap((result) => this.storeIdToken(result)),
-                map((_) => tokenResponse)
+                map(() => tokenResponse)
               );
             } else {
               return of(tokenResponse);
@@ -1370,16 +1369,16 @@ export class OAuthService extends AuthConfig implements OnDestroy {
 
     if (!this.useSilentRefresh && this.responseType === 'code') {
       this.refreshToken()
-        .then((_) => {
+        .then(() => {
           this.debug('token refresh after session change worked');
         })
-        .catch((_) => {
+        .catch(() => {
           this.debug('token refresh did not work after session changed');
           this.eventsSubject.next(new OAuthInfoEvent('session_terminated'));
           this.logOut(true);
         });
     } else if (this.silentRefreshRedirectUri) {
-      this.silentRefresh().catch((_) =>
+      this.silentRefresh().catch(() =>
         this.debug('silent refresh failed after session changed')
       );
       this.waitForSilentRefreshAfterSessionChange();
@@ -1492,7 +1491,7 @@ export class OAuthService extends AuthConfig implements OnDestroy {
     noPrompt = false,
     params: object = {}
   ): Promise<string> {
-    const that = this;
+    const that = this; // eslint-disable-line @typescript-eslint/no-this-alias
 
     let redirectUri: string;
 
@@ -1648,7 +1647,7 @@ export class OAuthService extends AuthConfig implements OnDestroy {
     } else {
       this.events
         .pipe(filter((e) => e.type === 'discovery_document_loaded'))
-        .subscribe((_) =>
+        .subscribe(() =>
           this.initImplicitFlowInternal(additionalState, params)
         );
     }
@@ -1664,7 +1663,7 @@ export class OAuthService extends AuthConfig implements OnDestroy {
   }
 
   protected callOnTokenReceivedIfExists(options: LoginOptions): void {
-    const that = this;
+    const that = this; // eslint-disable-line @typescript-eslint/no-this-alias
     if (options.onTokenReceived) {
       const tokenParams = {
         idClaims: that.getIdentityClaims(),
@@ -1680,7 +1679,7 @@ export class OAuthService extends AuthConfig implements OnDestroy {
     accessToken: string,
     refreshToken: string,
     expiresIn: number,
-    grantedScopes: String,
+    grantedScopes: string,
     customParameters?: Map<string, string>
   ): void {
     this._storage.setItem('access_token', accessToken);
@@ -1720,7 +1719,7 @@ export class OAuthService extends AuthConfig implements OnDestroy {
    */
   public tryLogin(options: LoginOptions = null): Promise<boolean> {
     if (this.config.responseType === 'code') {
-      return this.tryLoginCodeFlow(options).then((_) => true);
+      return this.tryLoginCodeFlow(options).then(() => true);
     } else {
       return this.tryLoginImplicitFlow(options);
     }
@@ -1757,10 +1756,10 @@ export class OAuthService extends AuthConfig implements OnDestroy {
         location.origin +
         location.pathname +
         location.search
-          .replace(/code=[^&\$]*/, '')
-          .replace(/scope=[^&\$]*/, '')
-          .replace(/state=[^&\$]*/, '')
-          .replace(/session_state=[^&\$]*/, '')
+          .replace(/code=[^&$]*/, '')
+          .replace(/scope=[^&$]*/, '')
+          .replace(/state=[^&$]*/, '')
+          .replace(/session_state=[^&$]*/, '')
           .replace(/^\?&/, '?')
           .replace(/&$/, '')
           .replace(/^\?$/, '')
@@ -1772,7 +1771,7 @@ export class OAuthService extends AuthConfig implements OnDestroy {
       history.replaceState(null, window.name, href);
     }
 
-    let [nonceInState, userState] = this.parseState(state);
+    const [nonceInState, userState] = this.parseState(state);
     this.state = userState;
 
     if (parts['error']) {
@@ -1907,7 +1906,7 @@ export class OAuthService extends AuthConfig implements OnDestroy {
 
     return new Promise((resolve, reject) => {
       if (this.customQueryParams) {
-        for (let key of Object.getOwnPropertyNames(this.customQueryParams)) {
+        for (const key of Object.getOwnPropertyNames(this.customQueryParams)) {
           params = params.set(key, this.customQueryParams[key]);
         }
       }
@@ -1994,7 +1993,7 @@ export class OAuthService extends AuthConfig implements OnDestroy {
 
     const state = parts['state'];
 
-    let [nonceInState, userState] = this.parseState(state);
+    const [nonceInState, userState] = this.parseState(state);
     this.state = userState;
 
     if (parts['error']) {
@@ -2073,7 +2072,7 @@ export class OAuthService extends AuthConfig implements OnDestroy {
               idToken: result.idToken,
               state: state,
             })
-            .then((_) => result);
+            .then(() => result);
         }
         return result;
       })
@@ -2252,7 +2251,7 @@ export class OAuthService extends AuthConfig implements OnDestroy {
     // i.e. Based on spec the at_hash check is only true for implicit code flow on Ping Federate
     // https://www.pingidentity.com/developer/en/resources/openid-connect-developers-guide.html
     if (
-      this.hasOwnProperty('responseType') &&
+      Object.prototype.hasOwnProperty.call(this, 'responseType') &&
       (this.responseType === 'code' || this.responseType === 'id_token')
     ) {
       this.disableAtHashCheck = true;
@@ -2296,7 +2295,7 @@ export class OAuthService extends AuthConfig implements OnDestroy {
     };
 
     if (this.disableAtHashCheck) {
-      return this.checkSignature(validationParams).then((_) => {
+      return this.checkSignature(validationParams).then(() => {
         const result: ParsedIdToken = {
           idToken: idToken,
           idTokenClaims: claims,
@@ -2316,7 +2315,7 @@ export class OAuthService extends AuthConfig implements OnDestroy {
         return Promise.reject(err);
       }
 
-      return this.checkSignature(validationParams).then((_) => {
+      return this.checkSignature(validationParams).then(() => {
         const atHashCheckEnabled = !this.disableAtHashCheck;
         const result: ParsedIdToken = {
           idToken: idToken,
@@ -2573,7 +2572,7 @@ export class OAuthService extends AuthConfig implements OnDestroy {
         }
       }
 
-      for (let key in customParameters) {
+      for (const key in customParameters) {
         params = params.set(key, customParameters[key]);
       }
 
@@ -2589,7 +2588,7 @@ export class OAuthService extends AuthConfig implements OnDestroy {
    * @ignore
    */
   public createAndSaveNonce(): Promise<string> {
-    const that = this;
+    const that = this; // eslint-disable-line @typescript-eslint/no-this-alias
     return this.createNonce().then(function (nonce: any) {
       // Use localStorage for nonce if possible
       // localStorage is the only storage who survives a
@@ -2717,7 +2716,7 @@ export class OAuthService extends AuthConfig implements OnDestroy {
     } else {
       this.events
         .pipe(filter((e) => e.type === 'discovery_document_loaded'))
-        .subscribe((_) => this.initCodeFlowInternal(additionalState, params));
+        .subscribe(() => this.initCodeFlowInternal(additionalState, params));
     }
   }
 
@@ -2763,7 +2762,7 @@ export class OAuthService extends AuthConfig implements OnDestroy {
   private extractRecognizedCustomParameters(
     tokenResponse: TokenResponse
   ): Map<string, string> {
-    let foundParameters: Map<string, string> = new Map<string, string>();
+    const foundParameters: Map<string, string> = new Map<string, string>();
     if (!this.config.customTokenParameters) {
       return foundParameters;
     }
@@ -2787,9 +2786,9 @@ export class OAuthService extends AuthConfig implements OnDestroy {
     customParameters: boolean | object = {},
     ignoreCorsIssues = false
   ): Promise<any> {
-    let revokeEndpoint = this.revocationEndpoint;
-    let accessToken = this.getAccessToken();
-    let refreshToken = this.getRefreshToken();
+    const revokeEndpoint = this.revocationEndpoint;
+    const accessToken = this.getAccessToken();
+    const refreshToken = this.getRefreshToken();
 
     if (!accessToken) {
       return Promise.resolve();
@@ -2826,7 +2825,7 @@ export class OAuthService extends AuthConfig implements OnDestroy {
       let revokeRefreshToken: Observable<void>;
 
       if (accessToken) {
-        let revokationParams = params
+        const revokationParams = params
           .set('token', accessToken)
           .set('token_type_hint', 'access_token');
         revokeAccessToken = this.http.post<void>(
@@ -2839,7 +2838,7 @@ export class OAuthService extends AuthConfig implements OnDestroy {
       }
 
       if (refreshToken) {
-        let revokationParams = params
+        const revokationParams = params
           .set('token', refreshToken)
           .set('token_type_hint', 'refresh_token');
         revokeRefreshToken = this.http.post<void>(
